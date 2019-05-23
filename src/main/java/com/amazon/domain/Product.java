@@ -19,5 +19,10 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
-//    private Seller seller;
+    @ManyToOne
+    @JoinColumn(name = "seller_id")
+    private Seller seller;
+
+
+
 }
