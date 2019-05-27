@@ -9,6 +9,7 @@ import java.util.Set;
 
 @Data
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -16,14 +17,25 @@ public class User {
     private Long id;
     private String email;
     private String name;
+    private String password;
     private boolean isAdmin;
     @OneToMany
     @JoinColumn(name = "user_id")
     private List<Address> addresses;
-//    private Basket basket;
-//    private Set<CreditCard> creditCards;
-//    private Set<GiftCard> giftCards;
-//    private Set<Order> orders;
+    @OneToOne
+    private ShoppingCart shoppingCart;
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private List<Seller> sellers;
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private Set<CreditCard> creditCards;
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private Set<GiftCard> giftCards;
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private Set<Order> orders;
 
 
 

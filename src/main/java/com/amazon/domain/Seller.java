@@ -2,13 +2,12 @@ package com.amazon.domain;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Entity
+@Table(name = "sellers")
 public class Seller {
 
     @Id
@@ -16,4 +15,7 @@ public class Seller {
     private Long id;
     private String legalName;
     private String businessDisplayName;
+    @OneToMany
+    @JoinColumn(name = "seller_id")
+    private List<BankAccount> bankAccounts;
 }

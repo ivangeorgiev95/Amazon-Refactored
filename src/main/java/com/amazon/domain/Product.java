@@ -4,9 +4,11 @@ package com.amazon.domain;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.Set;
 
 @Data
 @Entity
+@Table(name = "products")
 public class Product {
 
     @Id
@@ -22,6 +24,8 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "seller_id")
     private Seller seller;
+    @OneToMany(mappedBy = "product")
+    private Set<CartProducts> carts;
 
 
 

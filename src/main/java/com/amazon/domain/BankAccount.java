@@ -1,21 +1,18 @@
 package com.amazon.domain;
 
-
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.Set;
 
-@Data
 @Entity
-@Table(name = "shopping_carts")
-public class ShoppingCart {
+@Data
+@Table(name = "bank_accounts")
+public class BankAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToMany(mappedBy = "shoppingCart")
-    private Set<CartProducts> products;
-
+    private String iban;
+    private Double balance;
 
 }

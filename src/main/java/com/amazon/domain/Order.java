@@ -1,21 +1,20 @@
 package com.amazon.domain;
 
-
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.Set;
+import java.time.LocalDateTime;
 
-@Data
 @Entity
-@Table(name = "shopping_carts")
-public class ShoppingCart {
+@Data
+@Table(name = "orders")
+public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToMany(mappedBy = "shoppingCart")
-    private Set<CartProducts> products;
-
+    private LocalDateTime orderDate;
+    @OneToOne
+    private ShoppingCart shoppingCart;
 
 }
