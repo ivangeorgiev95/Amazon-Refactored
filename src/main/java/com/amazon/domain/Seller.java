@@ -1,12 +1,14 @@
 package com.amazon.domain;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "sellers")
 public class Seller {
 

@@ -1,11 +1,13 @@
 package com.amazon.domain;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Table(name = "bank_accounts")
 public class BankAccount {
 

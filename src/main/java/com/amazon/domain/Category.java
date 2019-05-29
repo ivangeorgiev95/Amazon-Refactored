@@ -2,11 +2,13 @@ package com.amazon.domain;
 
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "categories")
 public class Category {
 

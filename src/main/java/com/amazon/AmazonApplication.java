@@ -6,10 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-//@EnableAutoConfiguration
-//@ComponentScan(basePackages = "com.amazon.demo")
-//@EnableJpaRepositories("com.amazon.demo.repositories")
-//@EntityScan("com.amazon.demo.models")
 public class AmazonApplication {
 	
 	
