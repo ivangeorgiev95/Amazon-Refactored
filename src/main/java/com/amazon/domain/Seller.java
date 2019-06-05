@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.List;
+import javax.validation.constraints.NotBlank;
 
 @Data
 @Entity
@@ -15,9 +15,17 @@ public class Seller {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank(message = "Seller's legal name can't be blank!")
     private String legalName;
+    @Column(unique = true)
+    @NotBlank(message = "Seller's business dislpay name can't be blank!")
     private String businessDisplayName;
-    @OneToMany
-    @JoinColumn(name = "seller_id")
-    private List<BankAccount> bankAccounts;
+    @OneToOne
+    private BankAccount bankAccount;
+
+    public Seller(String legalName, String businessDisplayName, BankAccount bankAccount) {
+        this.legalName = legalName;
+        this.businessDisplayName = businessDisplayName;
+        this.bankAccount = bankAccount;
+    }
 }

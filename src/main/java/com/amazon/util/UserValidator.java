@@ -8,7 +8,7 @@ import com.amazon.exceptions.UserException;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class Validation {
+public class UserValidator {
 
 	private static final String USER_ATTRIBUTE = "user";
 
@@ -19,7 +19,7 @@ public class Validation {
 	}
 	
 	public static void validateAdminUser(HttpServletRequest request) throws NotLoggedInException, NotAdminException {
-		Validation.validateLogIn(request);
+		UserValidator.validateLogIn(request);
 		if(!((User)request.getSession().getAttribute(USER_ATTRIBUTE)).isAdmin()) {
 			throw new NotAdminException("You are not admin!");
 		}
@@ -31,9 +31,4 @@ public class Validation {
 		}
 	}
 	
-	public static void validateBasketNotEmpty(HttpServletRequest request) throws EmptyBasketException {
-		if(((User)request.getSession().getAttribute(USER_ATTRIBUTE)).getShoppingCart().getProducts().isEmpty()) {
-			throw new EmptyBasketException("Basket is empty!");
-		}
-	}
 }

@@ -31,9 +31,9 @@ public class ExceptionHandlingController {
 	
 	@ExceptionHandler({
 //			AddressException.class, CategoryException.class, ProductException.class,
-		UserException.class, InvalidPasswordException.class,
+		UserException.class, InvalidPasswordException.class, SellerException.class,
 //			CreditCardException.class, GiftCardException.class, OrderException.class,
-//		BasketException.class, NotEnoughMoneyInCreditCardException.class, BankAccountException.class, SellerException.class,
+//		BasketException.class, NotEnoughMoneyInCreditCardException.class, BankAccountException.class,
 //		NotEnoughQuantityException.class, AdminException.class,
 			EmptyBasketException.class})
 	public ResponseEntity<ResponseDTO> addressExceptionHandler(Exception e){

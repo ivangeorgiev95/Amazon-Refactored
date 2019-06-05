@@ -1,13 +1,10 @@
 package com.amazon.controller;
 
 import com.amazon.domain.*;
-import com.amazon.dto.CreationResponseDTO;
-import com.amazon.dto.LoginDTO;
-import com.amazon.dto.ResponseDTO;
-import com.amazon.dto.UserRegistrationDTO;
+import com.amazon.dto.*;
 import com.amazon.exceptions.*;
 import com.amazon.service.UserService;
-import com.amazon.util.Validation;
+import com.amazon.util.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,7 +31,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<CreationResponseDTO> register(@RequestBody @Valid UserRegistrationDTO registrationDTO) throws UserException {
-        Validation.validateUserPassword(registrationDTO.getPassword(), registrationDTO.getReEnteredPassword());
+        UserValidator.validateUserPassword(registrationDTO.getPassword(), registrationDTO.getReEnteredPassword());
         Long newUserId = userService.registerUser(registrationDTO);
         return new ResponseEntity<CreationResponseDTO>(new CreationResponseDTO(HttpStatus.CREATED.value(), "User registered successfully!", newUserId), HttpStatus.CREATED);
     }
@@ -54,64 +51,66 @@ public class UserController {
 //    }
     @GetMapping("/orders")
     public Set<Order> getUserOrders(HttpServletRequest request) throws NotLoggedInException {
-        Validation.validateLogIn(request);
+        UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getOrders();
     }
     @GetMapping("/addresses")
     public List<Address> getUserAddresses(HttpServletRequest request) throws NotLoggedInException {
-        Validation.validateLogIn(request);
+        UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getAddresses();
     }
     @GetMapping("/creditCards")
     public Set<CreditCard> getUserCreditCards(HttpServletRequest request) throws NotLoggedInException {
-        Validation.validateLogIn(request);
-        return ((User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE)).getCreditCards();
+        UserValidator.validateLogIn(request);
+        User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
+        return loggedUser.getCreditCards();
     }
     @GetMapping("/giftCards")
     public Set<GiftCard> getUserGiftCards(HttpServletRequest request) throws NotLoggedInException {
-        Validation.validateLogIn(request);
-        return ((User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE)).getGiftCards();
+        UserValidator.validateLogIn(request);
+        User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
+        return loggedUser.getGiftCards();
     }
-//    @GetMapping("/basket")
-//    public Basket getUserBasket(HttpServletRequest request) throws NotLoggedInException {
-//        Validation.validateLogIn(request);
-//        return ((User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE)).getBasket();
-//    }
-//    @GetMapping("/signout")
-//    public ResponseEntity<ResponseDTO> logout(HttpServletRequest request) {
-//        HttpSession session = request.getSession();
-//        session.invalidate();
-//        return new ResponseEntity<ResponseDTO>(new ResponseDTO(HttpStatus.OK.value(), "Sign out successful!"), HttpStatus.OK);
-//    }
-//
-//    @PostMapping("/makeOrder")
-//    public Order makeOrder(@RequestBody @Valid CreditCardOrderDTO creditCard ,HttpServletRequest request) throws EmptyBasketException, NotLoggedInException, CreditCardException, NotEnoughMoneyInCreditCardException, ProductException, NoSuchProductException, NotEnoughQuantityException, OrderException, UserException{
-//        Validation.validateLogIn(request);
-//        Validation.validateBasketNotEmpty(request);
-//        return userService.makeOrder((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), creditCard);
-//    }
-//
+    @GetMapping("/shoppingCart")
+    public ShoppingCart getUserShoppingCart(HttpServletRequest request) throws NotLoggedInException {
+        UserValidator.validateLogIn(request);
+        User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
+        return loggedUser.getShoppingCart();
+    }
+    @GetMapping("/signout")
+    public ResponseEntity<ResponseDTO> logout(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        session.invalidate();
+        return new ResponseEntity<ResponseDTO>(new ResponseDTO(HttpStatus.OK.value(), "Sign out successful!"), HttpStatus.OK);
+    }
+
+    @GetMapping("/makeOrder")
+    public Order makeOrder(HttpServletRequest request) throws EmptyBasketException, NotLoggedInException{
+        UserValidator.validateLogIn(request);
+        return userService.makeOrder((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE));
+    }
+
     @PostMapping("/add-new-address")
     public ResponseEntity<CreationResponseDTO> addNewAddress(@RequestBody @Valid Address newAddress, HttpServletRequest request) throws NotLoggedInException{
-        Validation.validateLogIn(request);
+        UserValidator.validateLogIn(request);
         Long newAddressId = this.userService.addNewAddress(newAddress, (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE));
         return new ResponseEntity<CreationResponseDTO>(new CreationResponseDTO(HttpStatus.CREATED.value(), "Address created successfully!", newAddressId), HttpStatus.CREATED);
     }
-//
-//    @PostMapping("/registerSeller")
-//    public ResponseEntity<CreateResponseDTO> registerNewSeller(@RequestBody @Valid SellerRegistrationDTO seller, HttpServletRequest request) throws NotLoggedInException, BankAccountException, SellerException {
-//        Validation.validateLogIn(request);
-//        Integer newSellerId = userService.registerNewSeller((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), seller, seller.getAccount());
-//        return new ResponseEntity<CreateResponseDTO>(new CreateResponseDTO(HttpStatus.CREATED.value(), "Seller created successfully!", newSellerId), HttpStatus.CREATED);
-//    }
-//
-//    @PostMapping("/addcreditCard")
-//    public ResponseEntity<CreateResponseDTO> addNewCreditcard(@RequestBody @Valid AddCreditCardDTO creditCard, HttpServletRequest request) throws NotLoggedInException, CreditCardException, UserException {
-//        Validation.validateLogIn(request);
-//        Integer newCreditCardId = userService.addNewCreditCard((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), creditCard);
-//        return new ResponseEntity<CreateResponseDTO>(new CreateResponseDTO(HttpStatus.CREATED.value(), "Credit card created successfully!", newCreditCardId), HttpStatus.CREATED);
-//    }
+
+    @PostMapping("/registerSeller")
+    public ResponseEntity<CreationResponseDTO> registerNewSeller(@RequestBody @Valid Seller seller, HttpServletRequest request) throws NotLoggedInException, SellerException {
+        UserValidator.validateLogIn(request);
+        Long newSellerId = userService.registerNewSeller((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), seller);
+        return new ResponseEntity<CreationResponseDTO>(new CreationResponseDTO(HttpStatus.CREATED.value(), "Seller created successfully!", newSellerId), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/addcreditCard")
+    public ResponseEntity<CreationResponseDTO> addNewCreditcard(@RequestBody @Valid CreditCard creditCard, HttpServletRequest request) throws NotLoggedInException, UserException {
+        UserValidator.validateLogIn(request);
+        Long newCreditCardId = userService.addNewCreditCard((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), creditCard);
+        return new ResponseEntity<CreationResponseDTO>(new CreationResponseDTO(HttpStatus.CREATED.value(), "Credit card created successfully!", newCreditCardId), HttpStatus.CREATED);
+    }
 
 }

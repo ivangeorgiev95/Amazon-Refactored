@@ -1,18 +1,19 @@
 package com.amazon.service;
 
-import com.amazon.domain.Address;
-import com.amazon.domain.User;
+import com.amazon.domain.*;
 import com.amazon.dto.LoginDTO;
 import com.amazon.dto.UserRegistrationDTO;
-import com.amazon.exceptions.InvalidEmailException;
-import com.amazon.exceptions.InvalidPasswordException;
-import com.amazon.exceptions.UserException;
-import com.amazon.repository.AddressRepository;
-import com.amazon.repository.UserRepository;
-import com.amazon.util.PasswordEncryption;
+import com.amazon.exceptions.*;
+import com.amazon.repository.*;
+import com.amazon.util.SensitiveDataEncryption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -20,30 +21,47 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
+    private final CreditCardRepository creditCardRepository;
+    private final SellerRepository sellerRepository;
+    private final BankAccountRepository bankAccountRepository;
 
     public Long registerUser(UserRegistrationDTO registrationDTO) throws UserException {
         if (isMailBusy(registrationDTO.getEmail())){
             throw new UserException("Email is unavailable!");
         }
-        String hashedPassword = PasswordEncryption.hashPassword(registrationDTO.getPassword());
-        User newUser = new User(registrationDTO.getEmail(), registrationDTO.getName(), hashedPassword);
-        return userRepository.save(newUser).getId();
+        String hashedPassword = SensitiveDataEncryption.hashSensitiveData(registrationDTO.getPassword());
+        User newUser = userRepository.save(new User(registrationDTO.getEmail(), registrationDTO.getName(), hashedPassword));
+        setNewShoppingCart(newUser);
+        return newUser.getId();
     }
 
     private boolean isMailBusy(String email){
         return userRepository.findByEmail(email) != null;
     }
-
+    
+    private void setNewShoppingCart(User user){
+        ShoppingCart newShoppingCart = shoppingCartRepository.save(new ShoppingCart());
+        user.setShoppingCart(newShoppingCart);
+        userRepository.save(user);
+    }
+    
     public User logUser(LoginDTO loginForm) throws InvalidPasswordException, InvalidEmailException {
         User loggedUser = userRepository.findByEmail(loginForm.getEmail());
         verifyEmail(loggedUser);
-        PasswordEncryption.verifyPassword(loginForm.getPassword(), loggedUser.getPassword());
+        verifyPassword(loginForm.getPassword(), loggedUser.getPassword());
         return loggedUser;
     }
 
     private void verifyEmail(User loggedUser) throws InvalidEmailException {
         if(loggedUser == null){
             throw new InvalidEmailException("Invalid email!");
+        }
+    }
+
+    private void verifyPassword(String loginPassword, String storedPassword) throws InvalidPasswordException {
+        if (!SensitiveDataEncryption.verifySensitiveData(loginPassword, storedPassword)){
+            throw new InvalidPasswordException("Invalid password!");
         }
     }
 
@@ -54,5 +72,84 @@ public class UserService {
         return addedAddress.getId();
     }
 
+
+    public Long addNewCreditCard(User user, CreditCard creditCard) throws UserException {
+        verifyUserDoesNotHaveCreditCard(creditCard.getCardNumber(), user);
+        Optional<CreditCard> existingCreditCard = findCreditCard(creditCard.getCardNumber());
+        if (existingCreditCard.isPresent()){
+            CreditCard newCreditCard = existingCreditCard.get();
+            user.getCreditCards().add(newCreditCard);
+            userRepository.save(user);
+            return newCreditCard.getId();
+        } else {
+            String hashedCardNumber = SensitiveDataEncryption.hashSensitiveData(creditCard.getCardNumber());
+            creditCard.setCardNumber(hashedCardNumber);
+            CreditCard newCreditCard = creditCardRepository.save(creditCard);
+            user.getCreditCards().add(newCreditCard);
+            userRepository.save(user);
+            return newCreditCard.getId();
+        }
+    }
+
+    private void verifyUserDoesNotHaveCreditCard(String cardNumber, User user) throws UserException {
+        if (user.getCreditCards().stream().anyMatch(creditCard -> SensitiveDataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber()))){
+            throw new UserException("User already has this credit card");
+        }
+    }
+
+    private Optional<CreditCard> findCreditCard(String cardNumber){
+        List<CreditCard> cardList = creditCardRepository.findAll();
+        return cardList.stream().filter(creditCard -> SensitiveDataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber())).findFirst();
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Long registerNewSeller(User user, Seller seller) throws SellerException {
+        verifyBusinessDisplayNameAvailability(seller.getBusinessDisplayName());
+        BankAccount sellerBankAccount = addBankAccount(seller.getBankAccount());
+        Seller addedSeller = sellerRepository.save(seller);
+        addedSeller.setBankAccount(sellerBankAccount);
+        user.getSellers().add(addedSeller);
+        userRepository.save(user);
+        return addedSeller.getId();
+    }
+
+    private void verifyBusinessDisplayNameAvailability(String businessDisplayName) throws SellerException {
+        Seller availableSeller = sellerRepository.findByBusinessDisplayName(businessDisplayName);
+        if (availableSeller != null){
+            throw new SellerException("Business display name already taken");
+        }
+    }
+
+    private BankAccount addBankAccount(BankAccount bankAccount){
+        BankAccount bankAccountToAdd = bankAccountRepository.findByIban(bankAccount.getIban());
+        if (bankAccountToAdd == null){
+           bankAccountToAdd = bankAccountRepository.save(bankAccount);
+        }
+        return bankAccountToAdd;
+    }
+
+
+    public Order makeOrder(User user) throws EmptyBasketException, UserException {
+        verifyShoppingCartNotEmpty(user.getShoppingCart());
+        verifyUserHasCreditCard(user);
+
+    }
+
+    private void verifyShoppingCartNotEmpty(ShoppingCart shoppingCart) throws EmptyBasketException {
+        if(shoppingCart.getProducts().isEmpty()){
+            throw new EmptyBasketException("Basket is empty!");
+        }
+    }
+
+    private void verifyUserHasCreditCard(User user) throws UserException {
+        if (user.getCreditCards().isEmpty()){
+            throw new UserException("User does not have credit card!");
+        }
+    }
+
+    private Double calculateOrderPrice(ShoppingCart shoppingCart){
+        Set<CartProducts> orderProducts = shoppingCart.getProducts();
+        return orderProducts.stream().map(orderProduct -> orderProduct.getQuantity()*orderProduct.getProduct().getPrice()).reduce(0.0, Double::sum);
+    }
 
 }

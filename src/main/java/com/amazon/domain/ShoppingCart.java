@@ -3,6 +3,8 @@ package com.amazon.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -17,6 +19,7 @@ public class ShoppingCart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @OneToMany(mappedBy = "shoppingCart")
+    @LazyCollection(LazyCollectionOption.FALSE)
     private Set<CartProducts> products;
 
 
