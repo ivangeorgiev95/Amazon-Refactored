@@ -2,6 +2,7 @@ package com.amazon.service;
 
 import com.amazon.domain.*;
 import com.amazon.dto.LoginDTO;
+import com.amazon.dto.OrderPaymentDTO;
 import com.amazon.dto.UserRegistrationDTO;
 import com.amazon.exceptions.*;
 import com.amazon.repository.*;
@@ -128,11 +129,16 @@ public class UserService {
         return bankAccountToAdd;
     }
 
-
-    public Order makeOrder(User user) throws EmptyBasketException, UserException {
+    @Transactional(rollbackOn = Exception.class)
+    public Order makeOrder(User user, OrderPaymentDTO orderPaymentForm) throws EmptyBasketException, UserException {
         verifyShoppingCartNotEmpty(user.getShoppingCart());
-        verifyUserHasCreditCard(user);
+        CreditCard creditCard = findUserCreditCard(user, orderPaymentForm);
+        Double price = calculateOrderPrice(user.getShoppingCart());
+        verifyUserHasMoney(creditCard.getBalance(), price);
 
+
+
+        return new Order();
     }
 
     private void verifyShoppingCartNotEmpty(ShoppingCart shoppingCart) throws EmptyBasketException {
@@ -141,15 +147,23 @@ public class UserService {
         }
     }
 
-    private void verifyUserHasCreditCard(User user) throws UserException {
-        if (user.getCreditCards().isEmpty()){
-            throw new UserException("User does not have credit card!");
+    private CreditCard findUserCreditCard(User user, OrderPaymentDTO orderPaymentForm) throws UserException {
+        Optional<CreditCard> creditCard = user.getCreditCards().stream().filter(card -> card.getId().equals(orderPaymentForm.getCreditCardId())).findFirst();
+        if (creditCard.isEmpty()){
+            throw new UserException("User credit card could not be found!");
         }
+        return creditCard.get();
     }
 
     private Double calculateOrderPrice(ShoppingCart shoppingCart){
         Set<CartProducts> orderProducts = shoppingCart.getProducts();
-        return orderProducts.stream().map(orderProduct -> orderProduct.getQuantity()*orderProduct.getProduct().getPrice()).reduce(0.0, Double::sum);
+        return orderProducts.stream().map(cartProduct -> cartProduct.getQuantity()*cartProduct.getProduct().getPrice()).reduce(0.0, Double::sum);
+    }
+
+    private void verifyUserHasMoney(Double balance, Double price) throws UserException {
+        if (balance < price){
+            throw new UserException("Not enough money in credit card!");
+        }
     }
 
 }

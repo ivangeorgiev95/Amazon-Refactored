@@ -87,9 +87,9 @@ public class UserController {
     }
 
     @GetMapping("/makeOrder")
-    public Order makeOrder(HttpServletRequest request) throws EmptyBasketException, NotLoggedInException{
+    public Order makeOrder(@RequestBody @Valid OrderPaymentDTO orderPaymentForm, HttpServletRequest request) throws EmptyBasketException, NotLoggedInException, UserException {
         UserValidator.validateLogIn(request);
-        return userService.makeOrder((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE));
+        return userService.makeOrder((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), orderPaymentForm);
     }
 
     @PostMapping("/add-new-address")

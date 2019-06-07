@@ -1,10 +1,14 @@
 package com.amazon.domain;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Data
 @Entity
@@ -22,6 +26,10 @@ public class Seller {
     private String businessDisplayName;
     @OneToOne
     private BankAccount bankAccount;
+    @OneToMany(mappedBy = "seller")
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @EqualsAndHashCode.Exclude
+    private List<Product> products;
 
     public Seller(String legalName, String businessDisplayName, BankAccount bankAccount) {
         this.legalName = legalName;
