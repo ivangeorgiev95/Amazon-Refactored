@@ -2,6 +2,7 @@ package com.amazon.domain;
 
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
@@ -18,9 +19,10 @@ public class ShoppingCart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToMany(mappedBy = "shoppingCart")
+    @OneToMany(mappedBy = "shoppingCart", cascade = CascadeType.ALL)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private Set<CartProducts> products;
+    @EqualsAndHashCode.Exclude
+    private Set<CartProduct> products;
 
 
 }

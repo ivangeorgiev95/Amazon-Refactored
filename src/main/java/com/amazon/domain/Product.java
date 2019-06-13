@@ -1,7 +1,9 @@
 package com.amazon.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
@@ -20,6 +22,7 @@ public class Product {
     private String name;
     private String description;
     private Double price;
+    @JsonIgnore
     private Integer quantity;
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -27,9 +30,12 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "seller_id")
     @ToString.Exclude
+    @JsonIgnore
     private Seller seller;
-    @OneToMany(mappedBy = "product")
-    private Set<CartProducts> carts;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private Set<CartProduct> carts;
 
     public Product(String name, String description, Double price, Integer quantity) {
         this.name = name;

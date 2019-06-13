@@ -26,6 +26,8 @@ public class UserService {
     private final CreditCardRepository creditCardRepository;
     private final SellerRepository sellerRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     public Long registerUser(UserRegistrationDTO registrationDTO) throws UserException {
         if (isMailBusy(registrationDTO.getEmail())){
@@ -130,15 +132,14 @@ public class UserService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public Order makeOrder(User user, OrderPaymentDTO orderPaymentForm) throws EmptyBasketException, UserException {
+    public Order makeOrder(User user, OrderPaymentDTO orderPaymentForm) throws EmptyBasketException, UserException, NotEnoughQuantityException {
         verifyShoppingCartNotEmpty(user.getShoppingCart());
         CreditCard creditCard = findUserCreditCard(user, orderPaymentForm);
-        Double price = calculateOrderPrice(user.getShoppingCart());
-        verifyUserHasMoney(creditCard.getBalance(), price);
-
-
-
-        return new Order();
+        Double orderPrice = calculateOrderPrice(user.getShoppingCart());
+        verifyUserHasMoney(creditCard.getBalance(), orderPrice);
+        payProducts(user.getShoppingCart());
+        decreaseCreditCardBalance(creditCard, orderPrice);
+        return submitOrder(user);
     }
 
     private void verifyShoppingCartNotEmpty(ShoppingCart shoppingCart) throws EmptyBasketException {
@@ -156,7 +157,7 @@ public class UserService {
     }
 
     private Double calculateOrderPrice(ShoppingCart shoppingCart){
-        Set<CartProducts> orderProducts = shoppingCart.getProducts();
+        Set<CartProduct> orderProducts = shoppingCart.getProducts();
         return orderProducts.stream().map(cartProduct -> cartProduct.getQuantity()*cartProduct.getProduct().getPrice()).reduce(0.0, Double::sum);
     }
 
@@ -164,6 +165,43 @@ public class UserService {
         if (balance < price){
             throw new UserException("Not enough money in credit card!");
         }
+    }
+
+    private void payProducts(ShoppingCart shoppingCart) throws NotEnoughQuantityException {
+        Set<CartProduct> cartProducts = shoppingCart.getProducts();
+        for (CartProduct cartProduct : cartProducts){
+            Product product = cartProduct.getProduct();
+            Integer availableQuantity = product.getQuantity();
+            Integer orderedQuantity = cartProduct.getQuantity();
+            if (availableQuantity < orderedQuantity){
+                throw new NotEnoughQuantityException("Insufficient quantity of product " + cartProduct.getProduct());
+            } else {
+                product.setQuantity(availableQuantity-orderedQuantity);
+                BankAccount sellerBankAccount = product.getSeller().getBankAccount();
+                Double balance = sellerBankAccount.getBalance();
+                Double price = product.getPrice()*orderedQuantity;
+                balance += price;
+                sellerBankAccount.setBalance(balance);
+                productRepository.save(product);
+                bankAccountRepository.save(sellerBankAccount);
+            }
+        }
+    }
+
+    private void decreaseCreditCardBalance(CreditCard creditCard, Double orderPrice){
+        Double balance = creditCard.getBalance();
+        balance -= orderPrice;
+        creditCard.setBalance(balance);
+        creditCardRepository.save(creditCard);
+    }
+
+    private Order submitOrder(User user){
+        Order order = orderRepository.save(new Order(user.getShoppingCart()));
+        ShoppingCart emptyShoppingCart = shoppingCartRepository.save(new ShoppingCart());
+        user.setShoppingCart(emptyShoppingCart);
+        user.getOrders().add(order);
+        userRepository.save(user);
+        return order;
     }
 
 }

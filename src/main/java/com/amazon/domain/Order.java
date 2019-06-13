@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@NoArgsConstructor
 @Table(name = "orders")
 public class Order {
 
@@ -19,4 +18,12 @@ public class Order {
     @OneToOne
     private ShoppingCart shoppingCart;
 
+    public Order() {
+        this.orderDate = LocalDateTime.now();
+    }
+
+    public Order(ShoppingCart shoppingCart) {
+        this();
+        this.shoppingCart = shoppingCart;
+    }
 }

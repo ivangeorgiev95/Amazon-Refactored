@@ -86,8 +86,8 @@ public class UserController {
         return new ResponseEntity<ResponseDTO>(new ResponseDTO(HttpStatus.OK.value(), "Sign out successful!"), HttpStatus.OK);
     }
 
-    @GetMapping("/makeOrder")
-    public Order makeOrder(@RequestBody @Valid OrderPaymentDTO orderPaymentForm, HttpServletRequest request) throws EmptyBasketException, NotLoggedInException, UserException {
+    @PostMapping("/makeOrder")
+    public Order makeOrder(@RequestBody @Valid OrderPaymentDTO orderPaymentForm, HttpServletRequest request) throws EmptyBasketException, NotLoggedInException, UserException, NotEnoughQuantityException {
         UserValidator.validateLogIn(request);
         return userService.makeOrder((User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE), orderPaymentForm);
     }

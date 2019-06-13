@@ -15,5 +15,5 @@ import javax.validation.constraints.Positive;
 public class OrderPaymentDTO {
 
 	@NotNull(message = "Credit card id can't be null!")@Positive(message = "Credit card id must be positive number!")
-	private Integer creditCardId;
+	private Long creditCardId;
 }
