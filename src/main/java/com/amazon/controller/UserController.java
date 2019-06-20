@@ -44,41 +44,42 @@ public class UserController {
         session.setAttribute(USER_SESSION_ATTRIBUTE, loggedUser);
         return new ResponseEntity<ResponseDTO>(new ResponseDTO(HttpStatus.OK.value(), "Log in successful!"), HttpStatus.OK);
     }
-//    @GetMapping("/profile")
-//    public User getUserProfile(HttpServletRequest request) throws NotLoggedInException {
-//        Validation.validateLogIn(request);
-//        return (User) request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
-//    }
+
     @GetMapping("/orders")
     public Set<Order> getUserOrders(HttpServletRequest request) throws NotLoggedInException {
         UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getOrders();
     }
+
     @GetMapping("/addresses")
     public List<Address> getUserAddresses(HttpServletRequest request) throws NotLoggedInException {
         UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getAddresses();
     }
+
     @GetMapping("/creditCards")
     public Set<CreditCard> getUserCreditCards(HttpServletRequest request) throws NotLoggedInException {
         UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getCreditCards();
     }
+
     @GetMapping("/giftCards")
     public Set<GiftCard> getUserGiftCards(HttpServletRequest request) throws NotLoggedInException {
         UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
         return loggedUser.getGiftCards();
     }
+
     @GetMapping("/shoppingCart")
     public ShoppingCart getUserShoppingCart(HttpServletRequest request) throws NotLoggedInException {
         UserValidator.validateLogIn(request);
         User loggedUser = (User)request.getSession().getAttribute(USER_SESSION_ATTRIBUTE);
-        return loggedUser.getShoppingCart();
+        return userService.findUserShoppingCart(loggedUser);
     }
+
     @GetMapping("/signout")
     public ResponseEntity<ResponseDTO> logout(HttpServletRequest request) {
         HttpSession session = request.getSession();

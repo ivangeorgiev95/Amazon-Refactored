@@ -7,23 +7,33 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @Data
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "cart_has_products")
-public class CartProduct implements Serializable {
+public class CartProduct {
 
-    @Id
+//    @Id
+//    @ManyToOne
+//    @JoinColumn
+//    @JsonIgnore
+//    private ShoppingCart shoppingCart;
+//    @Id
+//    @ManyToOne
+//    @JoinColumn
+//    private Product product;
+
+    @EmbeddedId
+    @JsonIgnore
+    private CartProductId id;
     @ManyToOne
-    @JoinColumn
+    @MapsId("shoppingCartId")
     @JsonIgnore
     private ShoppingCart shoppingCart;
-    @Id
     @ManyToOne
-    @JoinColumn
+    @MapsId("productId")
     private Product product;
     private Integer quantity;
 

@@ -204,4 +204,8 @@ public class UserService {
         return order;
     }
 
+    public ShoppingCart findUserShoppingCart(User user){
+        return shoppingCartRepository.findById(user.getShoppingCart().getId()).get();
+    }
+
 }

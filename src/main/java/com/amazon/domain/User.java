@@ -34,7 +34,7 @@ public class User {
     @JoinColumn(name = "user_id")
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<Seller> sellers;
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "user_credit_cards", joinColumns =  @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "credit_card_id"))
     @LazyCollection(LazyCollectionOption.FALSE)
     private Set<CreditCard> creditCards;
