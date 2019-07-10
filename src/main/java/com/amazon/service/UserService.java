@@ -28,12 +28,13 @@ public class UserService {
     private final BankAccountRepository bankAccountRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final SensitiveDataEncryption dataEncryption;
 
     public Long registerUser(UserRegistrationDTO registrationDTO) throws UserException {
         if (isMailBusy(registrationDTO.getEmail())){
             throw new UserException("Email is unavailable!");
         }
-        String hashedPassword = SensitiveDataEncryption.hashSensitiveData(registrationDTO.getPassword());
+        String hashedPassword = dataEncryption.hashSensitiveData(registrationDTO.getPassword());
         User newUser = userRepository.save(new User(registrationDTO.getEmail(), registrationDTO.getName(), hashedPassword));
         setNewShoppingCart(newUser);
         return newUser.getId();
@@ -63,7 +64,7 @@ public class UserService {
     }
 
     private void verifyPassword(String loginPassword, String storedPassword) throws InvalidPasswordException {
-        if (!SensitiveDataEncryption.verifySensitiveData(loginPassword, storedPassword)){
+        if (!dataEncryption.verifySensitiveData(loginPassword, storedPassword)){
             throw new InvalidPasswordException("Invalid password!");
         }
     }
@@ -85,7 +86,7 @@ public class UserService {
             userRepository.save(user);
             return newCreditCard.getId();
         } else {
-            String hashedCardNumber = SensitiveDataEncryption.hashSensitiveData(creditCard.getCardNumber());
+            String hashedCardNumber = dataEncryption.hashSensitiveData(creditCard.getCardNumber());
             creditCard.setCardNumber(hashedCardNumber);
             CreditCard newCreditCard = creditCardRepository.save(creditCard);
             user.getCreditCards().add(newCreditCard);
@@ -95,14 +96,14 @@ public class UserService {
     }
 
     private void verifyUserDoesNotHaveCreditCard(String cardNumber, User user) throws UserException {
-        if (user.getCreditCards().stream().anyMatch(creditCard -> SensitiveDataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber()))){
+        if (user.getCreditCards().stream().anyMatch(creditCard -> dataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber()))){
             throw new UserException("User already has this credit card");
         }
     }
 
     private Optional<CreditCard> findCreditCard(String cardNumber){
         List<CreditCard> cardList = creditCardRepository.findAll();
-        return cardList.stream().filter(creditCard -> SensitiveDataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber())).findFirst();
+        return cardList.stream().filter(creditCard -> dataEncryption.verifySensitiveData(cardNumber, creditCard.getCardNumber())).findFirst();
     }
 
     @Transactional(rollbackOn = Exception.class)
